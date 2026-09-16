@@ -1,0 +1,30 @@
+version = "1"
+title = "freyja example build spec"
+
+[extensions]
+[extensions.oci]
+enabled = true
+[extensions.alt_rpm]
+enabled = true
+
+[targets]
+
+[targets.nginx]
+image = "registry.example.com/example_user/nginx"
+tags = [ "latest" ]
+arches = [ "amd64", "arm64" ]
+
+[targets.nginx.dependencies.base_image]
+type = "oci"
+reference = "registry.altlinux.org/sisyphus/base"
+tag = "latest"
+
+[targets.nginx.dependencies.nginx]
+type = "alt_rpm"
+repository = "sisyphus"
+package = "nginx"
+
+[targets.nginx.dependencies.nginx_deps]
+type = "alt_rpm"
+repository = "sisyphus"
+packages = ["webserver-common", "tzdata"]
