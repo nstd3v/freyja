@@ -22,7 +22,7 @@ tag = "latest"
 [targets.nginx.dependencies.nginx]
 type = "alt_rpm"
 repository = "sisyphus"
-package = "nginx"
+packages = ["nginx"]
 
 [targets.nginx.dependencies.nginx_deps]
 type = "alt_rpm"

@@ -1,0 +1,7 @@
+[workspace]
+resolver = "3"
+members = ["crates/freyja-core"]
+
+[workspace.dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "1.1.6"
