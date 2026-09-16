@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct ExtensionsSpec {
     #[serde(default)]
     pub oci: Option<OciExtensionSpec>,

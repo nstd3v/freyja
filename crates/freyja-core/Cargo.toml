@@ -8,3 +8,6 @@ async-trait.workspace = true
 serde.workspace = true
 thiserror = "2.0.20"
 toml.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

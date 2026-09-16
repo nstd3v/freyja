@@ -12,6 +12,9 @@ image = "registry.example.com/example_user/nginx"
 tags = [ "latest" ]
 arches = [ "amd64", "arm64" ]
 
+[targets.nginx.build]
+context = "."
+
 [targets.nginx.dependencies.base_image]
 type = "oci"
 reference = "registry.altlinux.org/sisyphus/base"
