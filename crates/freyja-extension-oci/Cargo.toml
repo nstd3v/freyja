@@ -6,5 +6,5 @@ edition = "2024"
 [dependencies]
 async-trait.workspace = true
 freyja-core.workspace = true
-oci-client = "0.17.0"
+oci-client.workspace = true
 serde.workspace = true
