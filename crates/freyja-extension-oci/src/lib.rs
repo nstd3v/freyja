@@ -1,5 +1,9 @@
 use async_trait::async_trait;
-use freyja_core::spec::deps::{DependencyResolver, DependencySpec, ResolvedDependency};
+use freyja_core::{
+    error::Error,
+    spec::deps::{DependencyResolver, DependencySpec, ResolvedDependency},
+};
+use oci_client::{Client, Reference, secrets::RegistryAuth};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -8,7 +12,21 @@ pub struct OciDependency {
 }
 
 pub struct OciResolver {
-    // registry client, auth config, etc.
+    client: Client,
+}
+
+impl OciResolver {
+    pub fn new() -> Self {
+        Self {
+            client: Client::new(Default::default()),
+        }
+    }
+}
+
+impl Default for OciResolver {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[async_trait]
@@ -17,15 +35,42 @@ impl DependencyResolver for OciResolver {
         "oci"
     }
 
-    async fn resolve(
-        &self,
-        dependency: &DependencySpec,
-    ) -> Result<ResolvedDependency, freyja_core::error::Error> {
-        // 1. deserialize dependency.config into OciDependency
-        // 2. query OCI registry
-        // 3. get manifest digest
-        // 4. return canonical result
+    async fn resolve(&self, dependency: &DependencySpec) -> Result<ResolvedDependency, Error> {
+        let config: OciDependency = dependency.config.clone().try_into().map_err(|source| {
+            Error::InvalidDependencyConfig {
+                kind: self.kind().to_owned(),
+                source,
+            }
+        })?;
 
-        todo!()
+        let reference: Reference =
+            config
+                .r#ref
+                .parse()
+                .map_err(|source| Error::InvalidDependencyReference {
+                    kind: self.kind().to_owned(),
+                    reference: config.r#ref.clone(),
+                    source: Box::new(source),
+                })?;
+
+        // Anonymous is enough for the initial implementation.
+        let auth = RegistryAuth::Anonymous;
+
+        let digest = self
+            .client
+            .fetch_manifest_digest(&reference, &auth)
+            .await
+            .map_err(|source| Error::DependencyResolution {
+                kind: self.kind().to_owned(),
+                reference: config.r#ref.clone(),
+                source: Box::new(source),
+            })?;
+
+        Ok(ResolvedDependency {
+            kind: self.kind().to_owned(),
+            reference: config.r#ref,
+            fingerprint: digest,
+            metadata: Default::default(),
+        })
     }
 }
