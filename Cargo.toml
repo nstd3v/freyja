@@ -1,7 +1,9 @@
 [workspace]
 resolver = "3"
-members = ["crates/freyja-core"]
+members = ["crates/freyja-core", "crates/freyja-extension-oci"]
 
 [workspace.dependencies]
+freyja-core = { path = "crates/freyja-core" }
+async-trait = "0.1.92"
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.6"

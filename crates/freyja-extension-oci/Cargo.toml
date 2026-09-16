@@ -1,10 +1,9 @@
 [package]
-name = "freyja-core"
+name = "freyja-extension-oci"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 async-trait.workspace = true
+freyja-core.workspace = true
 serde.workspace = true
-thiserror = "2.0.20"
-toml.workspace = true
