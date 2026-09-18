@@ -3,6 +3,11 @@ pub mod deps;
 pub mod ext;
 pub mod target;
 
+pub use build::BuildSpec;
+pub use deps::*;
+pub use ext::*;
+pub use target::*;
+
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 

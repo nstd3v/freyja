@@ -25,6 +25,12 @@ pub enum Error {
         source: toml::de::Error,
     },
 
+    #[error("failed to serialize state")]
+    SerializeState {
+        #[source]
+        source: toml::ser::Error,
+    },
+
     #[error("invalid configuration for dependency type `{kind}`")]
     InvalidDependencyConfig {
         kind: String,
@@ -50,4 +56,10 @@ pub enum Error {
         #[source]
         source: Box<dyn std::error::Error + Send + Sync>,
     },
+
+    #[error("failed to execute build command: {0}")]
+    BuildCommand(#[from] std::io::Error),
+
+    #[error("build failed for target `{target}` with exit status {status:?}")]
+    BuildFailed { target: String, status: Option<i32> },
 }

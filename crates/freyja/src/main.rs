@@ -5,8 +5,10 @@ mod helpers;
 use clap::Parser;
 
 use cli::{Cli, Command};
+use freyja_builder_buildkit::BuildkitBuilder;
 use freyja_core::{error::Error, planner::Planner, resolver::ResolverRegistry};
 use freyja_extension_oci::OciResolver;
+use
 
 #[tokio::main]
 async fn main() {
@@ -23,14 +25,21 @@ async fn run() -> Result<(), Error> {
     resolvers.register(OciResolver::new());
 
     let planner = Planner::new(&resolvers);
+    let builder = BuildkitBuilder::new();
 
     match cli.command {
         Command::Plan(_args) => {
             commands::plan(&cli.file, &cli.state, &planner).await?;
         }
 
-        Command::Build(_) => {
-            todo!("build command");
+        Command::Build(_args) => {
+            commands::build::execute(
+                &cli.file,
+                &state_path,
+                &planner,
+                &builder,
+            )
+            .await?;
         }
 
         Command::Explain(_) => {
