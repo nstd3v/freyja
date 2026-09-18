@@ -20,7 +20,7 @@ mod tests {
             build::BuildSpec,
             deps::{DependencyResolver, DependencySpec, ResolvedDependency},
             ext::ExtensionsSpec,
-            target::{Arches, TargetSpec},
+            target::TargetSpec,
         },
         state::{State, TargetState},
     };

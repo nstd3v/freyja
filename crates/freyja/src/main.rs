@@ -8,7 +8,6 @@ use cli::{Cli, Command};
 use freyja_builder_buildkit::BuildkitBuilder;
 use freyja_core::{error::Error, planner::Planner, resolver::ResolverRegistry};
 use freyja_extension_oci::OciResolver;
-use
 
 #[tokio::main]
 async fn main() {
@@ -25,7 +24,7 @@ async fn run() -> Result<(), Error> {
     resolvers.register(OciResolver::new());
 
     let planner = Planner::new(&resolvers);
-    let builder = BuildkitBuilder::new();
+    let builder = BuildkitBuilder {};
 
     match cli.command {
         Command::Plan(_args) => {
@@ -33,13 +32,7 @@ async fn run() -> Result<(), Error> {
         }
 
         Command::Build(_args) => {
-            commands::build::execute(
-                &cli.file,
-                &state_path,
-                &planner,
-                &builder,
-            )
-            .await?;
+            commands::build(&cli.file, &cli.state, &planner, &builder).await?;
         }
 
         Command::Explain(_) => {
