@@ -1,11 +1,25 @@
-use std::path::PathBuf;
+use std::path::Path;
 
-use freyja_core::planner::{Plan, PlanAction, PlanReason};
+use freyja_core::{
+    error::Error,
+    planner::{Plan, PlanAction, PlanReason, Planner},
+};
 
-use crate::cli::PlanArgs;
+use crate::helpers::{load_spec, load_state};
 
-pub fn execute(file: &PathBuf, args: PlanArgs) -> Result<(), freyja_core::error::Error> {
-    todo!()
+pub async fn execute(
+    spec_path: &Path,
+    state_path: &Path,
+    planner: &Planner<'_>,
+) -> Result<(), Error> {
+    let spec = load_spec(spec_path)?;
+    let state = load_state(state_path)?;
+
+    let plan = planner.plan(&spec, &state).await?;
+
+    print_plan(&plan);
+
+    Ok(())
 }
 
 fn print_plan(plan: &Plan) {

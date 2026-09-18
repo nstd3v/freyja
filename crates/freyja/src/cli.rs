@@ -14,9 +14,18 @@ pub struct Cli {
         short = 'f',
         long = "file",
         global = true,
-        default_value = "freyja.yaml"
+        default_value = "freyja.toml"
     )]
     pub file: PathBuf,
+
+    /// Path to the Freyj state file
+    #[arg(
+        short = 's',
+        long = "state",
+        global = true,
+        default_value = ".freyja/state.toml"
+    )]
+    pub state: PathBuf,
 
     #[command(subcommand)]
     pub command: Command,

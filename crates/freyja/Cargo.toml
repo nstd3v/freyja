@@ -5,5 +5,7 @@ edition = "2024"
 
 [dependencies]
 freyja-core.workspace = true
+freyja-extension-oci.workspace = true
 clap.workspace = true
 tokio.workspace = true
+toml.workspace = true

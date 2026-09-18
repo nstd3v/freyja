@@ -99,17 +99,3 @@ fn compare_dependencies(
 
     reasons
 }
-
-fn dependency_map<'a>(
-    dependencies: &'a [ResolvedDependency],
-) -> BTreeMap<(&'a str, &'a str), &'a ResolvedDependency> {
-    dependencies
-        .iter()
-        .map(|dependency| {
-            (
-                (dependency.kind.as_str(), dependency.reference.as_str()),
-                dependency,
-            )
-        })
-        .collect()
-}

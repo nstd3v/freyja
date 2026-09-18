@@ -458,7 +458,9 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "freyja-core",
+ "freyja-extension-oci",
  "tokio",
+ "toml",
 ]
 
 [[package]]

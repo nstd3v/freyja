@@ -17,5 +17,4 @@ context = "."
 
 [targets.nginx.dependencies.base_image]
 type = "oci"
-reference = "registry.altlinux.org/sisyphus/base"
-tag = "latest"
+ref = "registry.altlinux.org/sisyphus/base:latest"
