@@ -35,8 +35,8 @@ async fn run() -> Result<(), Error> {
             commands::build(&cli.file, &cli.state, &planner, &builder).await?;
         }
 
-        Command::Explain(_) => {
-            todo!("explain command");
+        Command::Explain(args) => {
+            commands::explain(&args.target, &cli.file, &cli.state, &planner).await?
         }
     }
 

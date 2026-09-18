@@ -38,6 +38,9 @@ pub enum Error {
         source: toml::de::Error,
     },
 
+    #[error("unknown target name: {target}")]
+    UnknownTarget { target: String },
+
     #[error("unknown dependency type: {kind}")]
     UnknownDependencyType { kind: String },
 

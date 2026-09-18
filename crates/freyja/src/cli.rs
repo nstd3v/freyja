@@ -45,18 +45,18 @@ pub enum Command {
 
 #[derive(Debug, Args)]
 pub struct PlanArgs {
-    /// Plan only the specified target.
-    pub target: Option<String>,
+    // Plan only the specified target.
+    //pub target: Option<String>,
 }
 
 #[derive(Debug, Args)]
 pub struct BuildArgs {
-    /// Build only the specified target.
-    pub target: Option<String>,
+    // Build only the specified target.
+    //pub target: Option<String>,
 
-    /// Build even if dependencies have not changed.
-    #[arg(long)]
-    pub force: bool,
+    // Build even if dependencies have not changed.
+    //#[arg(long)]
+    //pub force: bool,
 }
 
 #[derive(Debug, Args)]
