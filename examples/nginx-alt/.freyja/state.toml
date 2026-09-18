@@ -1,0 +1,6 @@
+[targets.nginx.dependencies.base_image]
+kind = "oci"
+reference = "registry.altlinux.org/sisyphus/base:latest"
+fingerprint = "sha256:1a6ab67cc12cfbe2419ed8b805ae6fd75ed036f9da7211b78876d1cd0083b7ba"
+
+[targets.nginx.dependencies.base_image.metadata]

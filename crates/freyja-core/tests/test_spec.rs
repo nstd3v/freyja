@@ -3,7 +3,7 @@ mod tests {
     use freyja_core::spec::Spec;
     use std::{path::PathBuf, str::FromStr};
 
-    const EXAMPLE_SPEC_PATH: &str = "../../examples/freyja.toml";
+    const EXAMPLE_SPEC_PATH: &str = "../../examples/nginx-alt/freyja.toml";
 
     fn read_example_spec() -> Spec {
         let path = PathBuf::from_str(EXAMPLE_SPEC_PATH).unwrap();
