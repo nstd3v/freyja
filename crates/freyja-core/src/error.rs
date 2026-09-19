@@ -52,10 +52,11 @@ pub enum Error {
         source: Box<dyn std::error::Error + Send + Sync>,
     },
 
-    #[error("failed to resolve `{kind}` dependency `{reference}`")]
+    #[error("failed to resolve `{kind}` dependency `{reference}`: {source}")]
     DependencyResolution {
         kind: String,
         reference: String,
+
         #[source]
         source: Box<dyn std::error::Error + Send + Sync>,
     },

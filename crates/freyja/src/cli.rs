@@ -9,6 +9,10 @@ use clap::{Args, Parser, Subcommand};
     about = "Dependency-aware OCI image build orchestrator"
 )]
 pub struct Cli {
+    /// Freyja dir
+    #[arg(short = 'd', long = "dir", global = true, default_value = ".freyja")]
+    pub freyja_dir: PathBuf,
+
     /// Path to the Freyja configuration file.
     #[arg(
         short = 'f',

@@ -1,20 +1,24 @@
 version = "1"
-title = "freyja example build spec"
+title = "freyja ALT RPM example"
 
 [extensions]
-[extensions.oci]
-enabled = true
+oci.enabled = true
+alt_rpm.enabled = true
 
 [targets]
 
 [targets.nginx]
 image = "registry.example.com/example_user/nginx"
-tags = [ "latest" ]
-arches = [ "amd64", "arm64" ]
-
-[targets.nginx.build]
-context = "."
+tags = ["latest"]
+arches = ["amd64"]
+build.context = "."
 
 [targets.nginx.dependencies.base_image]
 type = "oci"
 ref = "registry.altlinux.org/sisyphus/base:latest"
+
+[targets.nginx.dependencies.nginx_package]
+type = "alt_rpm"
+repository = "sisyphus"
+arch = "x86_64"
+package = "nginx"

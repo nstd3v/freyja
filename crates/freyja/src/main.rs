@@ -7,6 +7,7 @@ use clap::Parser;
 use cli::{Cli, Command};
 use freyja_builder_buildkit::BuildkitBuilder;
 use freyja_core::{error::Error, planner::Planner, resolver::ResolverRegistry};
+use freyja_extension_altrpm::AltRpmResolver;
 use freyja_extension_oci::OciResolver;
 
 #[tokio::main]
@@ -22,6 +23,9 @@ async fn run() -> Result<(), Error> {
 
     let mut resolvers = ResolverRegistry::new();
     resolvers.register(OciResolver::new());
+
+    let cache = cli.freyja_dir.join("cache").join("alt-rpm");
+    resolvers.register(AltRpmResolver::new(cache));
 
     let planner = Planner::new(&resolvers);
     let builder = BuildkitBuilder {};
