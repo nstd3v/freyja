@@ -11,3 +11,5 @@
 [FJA-006] Every key component/protocol/interface in `freyja-core` should be tested with "fake" implementation of it.
 
 [FJA-007] Direct Buildkit communication temporaraly replaced by `podman buildx` cli interface
+
+[FJA-008] For repo-dependent extensions(for example alt-rpm) in dependency resolve is local+cached pkglist and alternatives.
