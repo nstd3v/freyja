@@ -1,4 +1,9 @@
-use std::{fmt::Write, fs, io::Read, path::{Component, Path}};
+use std::{
+    fmt::Write,
+    fs,
+    io::Read,
+    path::{Component, Path},
+};
 
 use sha2::{Digest, Sha256};
 
@@ -10,7 +15,8 @@ use crate::{error::Error, spec::TargetSpec};
 pub fn fingerprint(target: &TargetSpec) -> Result<String, Error> {
     let context = &target.build.context;
     let metadata = fs::symlink_metadata(context).map_err(|source| Error::BuildInput {
-        path: context.clone(), source,
+        path: context.clone(),
+        source,
     })?;
     if !metadata.is_dir() {
         return Err(Error::InvalidBuildInput {
@@ -21,7 +27,11 @@ pub fn fingerprint(target: &TargetSpec) -> Result<String, Error> {
 
     let dockerfile = context.join(&target.build.dockerfile);
     if target.build.dockerfile.as_os_str().is_empty()
-        || !target.build.dockerfile.components().all(|part| matches!(part, Component::Normal(_)))
+        || !target
+            .build
+            .dockerfile
+            .components()
+            .all(|part| matches!(part, Component::Normal(_)))
         || !dockerfile.is_file()
     {
         return Err(Error::InvalidBuildInput {
@@ -49,9 +59,15 @@ fn field(hash: &mut Sha256, bytes: &[u8]) {
 
 fn visit(root: &Path, dir: &Path, hash: &mut Sha256) -> Result<(), Error> {
     let mut entries = fs::read_dir(dir)
-        .map_err(|source| Error::BuildInput { path: dir.into(), source })?
+        .map_err(|source| Error::BuildInput {
+            path: dir.into(),
+            source,
+        })?
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|source| Error::BuildInput { path: dir.into(), source })?;
+        .map_err(|source| Error::BuildInput {
+            path: dir.into(),
+            source,
+        })?;
     entries.sort_by_key(|entry| entry.file_name());
     for entry in entries {
         let path = entry.path();
@@ -61,7 +77,8 @@ fn visit(root: &Path, dir: &Path, hash: &mut Sha256) -> Result<(), Error> {
             reason: "non-UTF-8 paths are not supported".into(),
         })?;
         let metadata = fs::symlink_metadata(&path).map_err(|source| Error::BuildInput {
-            path: path.clone(), source,
+            path: path.clone(),
+            source,
         })?;
         if metadata.is_dir() {
             field(hash, b"dir");
@@ -71,15 +88,19 @@ fn visit(root: &Path, dir: &Path, hash: &mut Sha256) -> Result<(), Error> {
             field(hash, b"file");
             field(hash, name.as_bytes());
             let mut file = fs::File::open(&path).map_err(|source| Error::BuildInput {
-                path: path.clone(), source,
+                path: path.clone(),
+                source,
             })?;
             field(hash, &metadata.len().to_le_bytes());
             let mut buffer = [0u8; 8192];
             loop {
                 let count = file.read(&mut buffer).map_err(|source| Error::BuildInput {
-                    path: path.clone(), source,
+                    path: path.clone(),
+                    source,
                 })?;
-                if count == 0 { break; }
+                if count == 0 {
+                    break;
+                }
                 hash.update(&buffer[..count]);
             }
         } else {

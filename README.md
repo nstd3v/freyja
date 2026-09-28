@@ -73,8 +73,8 @@ Target fields (`[targets.<name>]`):
 | `image` | Image reference to build and tag |
 | `tags` | Tags to apply to the image |
 | `arches` | Architectures to build: `amd64`, `arm64` |
-| `build.context` | Build context path |
-| `build.dockerfile` | Dockerfile inside the context (default `Dockerfile`) |
+| `build.context` | Build context path, resolved relative to the spec file's directory |
+| `build.dockerfile` | Dockerfile inside the context (default `Dockerfile`); passed to Podman with `-f` |
 | `[targets.<name>.dependencies.<dep>]` | Declared dependencies of the target |
 
 Every dependency has a `type` plus type-specific fields.

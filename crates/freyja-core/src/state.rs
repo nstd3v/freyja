@@ -41,10 +41,13 @@ impl State {
         dependencies: BTreeMap<String, ResolvedDependency>,
         build_fingerprint: String,
     ) {
-        self.targets.insert(name, TargetState {
-            dependencies,
-            build_fingerprint: Some(build_fingerprint),
-        });
+        self.targets.insert(
+            name,
+            TargetState {
+                dependencies,
+                build_fingerprint: Some(build_fingerprint),
+            },
+        );
     }
 }
 

@@ -28,7 +28,7 @@ async fn run() -> Result<(), Error> {
     //resolvers.register(AltRpmResolver::new(cache));
 
     let planner = Planner::new(&resolvers);
-    let builder = BuildkitBuilder {};
+    let builder = BuildkitBuilder::new();
 
     match cli.command {
         Command::Plan(_args) => {

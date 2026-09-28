@@ -44,7 +44,9 @@ fn print_plan(plan: &Plan) {
 fn format_reason(reason: &PlanReason) -> String {
     match reason {
         PlanReason::NeverBuilt => "target has never been built".to_owned(),
-        PlanReason::BuildInputChanged => "build inputs changed (or old state has no fingerprint)".to_owned(),
+        PlanReason::BuildInputChanged => {
+            "build inputs changed (or old state has no fingerprint)".to_owned()
+        }
 
         PlanReason::DependencyChanged {
             kind,

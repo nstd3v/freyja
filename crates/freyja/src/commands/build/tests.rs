@@ -64,12 +64,22 @@ impl DependencyResolver for FakeResolver {
 struct FakeBuilder {
     calls: AtomicUsize,
     fail: AtomicBool,
+    contexts: Mutex<Vec<PathBuf>>,
+    dockerfiles: Mutex<Vec<PathBuf>>,
 }
 
 #[async_trait::async_trait]
 impl Builder for FakeBuilder {
-    async fn build(&self, _: &str, _: &TargetSpec) -> Result<(), Error> {
+    async fn build(&self, _: &str, target: &TargetSpec) -> Result<(), Error> {
         self.calls.fetch_add(1, Ordering::Relaxed);
+        self.contexts
+            .lock()
+            .unwrap()
+            .push(target.build.context.clone());
+        self.dockerfiles
+            .lock()
+            .unwrap()
+            .push(target.build.dockerfile.clone());
         if self.fail.load(Ordering::Relaxed) {
             return Err(Error::BuildFailed {
                 target: "app".into(),
@@ -95,7 +105,8 @@ fn fixture(
     std::fs::write(context.join("Dockerfile"), "FROM scratch\n").unwrap();
     std::fs::write(
         &spec_path,
-        format!(r#"version = "1"
+        format!(
+            r#"version = "1"
 title = "test"
 [extensions]
 [targets.app]
@@ -105,7 +116,9 @@ arches = ["amd64"]
 build.context = "{}"
 [targets.app.dependencies.input]
 type = "fake"
-"#, context.display()),
+"#,
+            context.display()
+        ),
     )
     .unwrap();
     let fingerprint = Arc::new(Mutex::new("v1".to_owned()));
@@ -114,6 +127,8 @@ type = "fake"
     let builder = FakeBuilder {
         calls: AtomicUsize::new(0),
         fail: AtomicBool::new(false),
+        contexts: Mutex::new(Vec::new()),
+        dockerfiles: Mutex::new(Vec::new()),
     };
     (
         spec_path,
@@ -197,9 +212,13 @@ async fn changed_dockerfile_rebuilds_with_unchanged_dependency() {
     let (spec_path, state_path, registry, _, builder) = fixture(&dir);
     let planner = Planner::new(&registry);
 
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
     std::fs::write(dir.path("context/Dockerfile"), "FROM busybox\n").unwrap();
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
 
     assert_eq!(builder.calls.load(Ordering::Relaxed), 2);
 }
@@ -211,14 +230,24 @@ async fn context_file_changes_rebuild_and_then_skip() {
     let planner = Planner::new(&registry);
     let source = dir.path("context/source.txt");
 
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
     std::fs::write(&source, "first").unwrap();
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
     std::fs::write(&source, "second").unwrap();
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
     std::fs::remove_file(&source).unwrap();
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
     assert_eq!(builder.calls.load(Ordering::Relaxed), 4);
 }
 
@@ -228,17 +257,25 @@ async fn changed_target_configuration_and_legacy_state_rebuild() {
     let (spec_path, state_path, registry, _, builder) = fixture(&dir);
     let planner = Planner::new(&registry);
 
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
     let old = std::fs::read_to_string(&spec_path).unwrap();
     std::fs::write(&spec_path, old.replace("example/app", "example/other")).unwrap();
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
     assert_eq!(builder.calls.load(Ordering::Relaxed), 2);
 
     let mut state = State::load(&state_path).unwrap();
     state.targets.get_mut("app").unwrap().build_fingerprint = None;
     state.save(&state_path).unwrap();
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
-    execute(&spec_path, &state_path, &planner, &builder).await.unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
+    execute(&spec_path, &state_path, &planner, &builder)
+        .await
+        .unwrap();
     assert_eq!(builder.calls.load(Ordering::Relaxed), 3);
 }
 
@@ -265,12 +302,55 @@ async fn dockerfile_outside_context_is_rejected() {
     let old = std::fs::read_to_string(&spec_path).unwrap();
     std::fs::write(
         &spec_path,
-        old.replace("build.context =", "build.dockerfile = \"../outside\"\nbuild.context ="),
-    ).unwrap();
+        old.replace(
+            "build.context =",
+            "build.dockerfile = \"../outside\"\nbuild.context =",
+        ),
+    )
+    .unwrap();
 
     assert!(matches!(
         execute(&spec_path, &state_path, &planner, &builder).await,
         Err(Error::InvalidBuildInput { .. })
     ));
     assert_eq!(builder.calls.load(Ordering::Relaxed), 0);
+}
+
+#[tokio::test]
+async fn relative_context_is_resolved_against_spec_directory() {
+    let dir = TestDir::new();
+    let (spec_path, state_path, registry, _, builder) = fixture(&dir);
+    let original = std::fs::read_to_string(&spec_path).unwrap();
+    let absolute = dir.path("context");
+    std::fs::write(absolute.join("Customfile"), "FROM scratch\n").unwrap();
+    std::fs::write(
+        &spec_path,
+        original.replace(
+            &format!("build.context = \"{}\"", absolute.display()),
+            "build.context = \"context\"\nbuild.dockerfile = \"Customfile\"",
+        ),
+    )
+    .unwrap();
+    let loaded = load_spec(&spec_path).unwrap();
+    assert_eq!(
+        loaded.targets["app"].build.context,
+        absolute.canonicalize().unwrap()
+    );
+    assert_eq!(
+        loaded.targets["app"].build.dockerfile,
+        Path::new("Customfile")
+    );
+
+    execute(&spec_path, &state_path, &Planner::new(&registry), &builder)
+        .await
+        .unwrap();
+    assert_eq!(builder.calls.load(Ordering::Relaxed), 1);
+    assert_eq!(
+        builder.contexts.lock().unwrap().as_slice(),
+        &[absolute.canonicalize().unwrap()]
+    );
+    assert_eq!(
+        builder.dockerfiles.lock().unwrap().as_slice(),
+        &[PathBuf::from("Customfile")]
+    );
 }
