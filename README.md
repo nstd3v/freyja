@@ -20,12 +20,12 @@ The binary is named `freyja`.
 
 ## Quick start
 
-From the [`examples/nginx-alt/`](./examples/nginx-alt/) directory:
+From the [`examples/nginx-alt/`](./examples/nginx-alt/) directory (note: this example still requires the disabled `alt_rpm` resolver and will fail until that extension is restored or the dependency is removed):
 
 ```sh
-freyja plan           # show which targets need to be rebuilt
-freyja build          # build the targets that need it
-freyja explain nginx  # explain why a target needs to be rebuilt
+freyja --state ../.freyja/state.toml plan           # show which targets need to be rebuilt
+freyja --state ../.freyja/state.toml build          # build the targets that need it
+freyja --state ../.freyja/state.toml explain nginx  # explain why a target needs to be rebuilt
 ```
 
 ## CLI reference
@@ -97,7 +97,8 @@ See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for a c
 
 ## State & cache
 
-- `.freyja/state.toml` — stores the resolved-dependency fingerprints per target (saved atomically). `plan` compares the current fingerprints against the stored ones to decide `BUILD` or `SKIP` for each target; after a successful build, `build` records the new fingerprints.
+- The state file stores resolved-dependency and build-input fingerprints per target (saved atomically). `plan` compares them to decide `BUILD` or `SKIP`; old state without a build-input fingerprint triggers one rebuild. Keep the state file **outside every build context** (use `--state`): Freyja rejects a state path inside a context to prevent a rebuild loop.
+- Build-input fingerprints conservatively hash all regular files and directory paths in the context, including files ignored by Podman and generated files. Keep contexts small; Git/Cargo ignores do not limit this hash. Symlinks and special files in the context are currently rejected rather than silently skipped.
 - `.freyja/cache/alt-rpm/` — caches ALT package lists fetched from mirrors, so repeated runs do not re-download them within the cache TTL (1 hour).
 
 ## Project layout

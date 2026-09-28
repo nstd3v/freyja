@@ -6,7 +6,7 @@
 
 [FJA-004] If extension provides new type of dependency, it should implement core's resolver trait.
 
-[FJA-005] Builders engines also pushes into separate crates. Every builder should complain the core's builder trait
+[FJA-005] Builders engines should be in separate crates. Every builder should complain the core's builder trait
 
 [FJA-006] Every key component/protocol/interface in `freyja-core` should be tested with "fake" implementation of it.
 
