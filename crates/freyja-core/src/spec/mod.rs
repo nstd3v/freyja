@@ -15,6 +15,7 @@ use std::collections::BTreeMap;
 pub struct Spec {
     pub version: String,
     pub title: String,
+    #[serde(default)]
     pub extensions: ext::ExtensionsSpec,
     pub targets: BTreeMap<String, target::TargetSpec>,
 }

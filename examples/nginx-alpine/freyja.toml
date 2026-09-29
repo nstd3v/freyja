@@ -2,6 +2,7 @@ version = "1"
 title = "Alpine nginx example"
 
 [extensions]
+apk.enabled = true
 
 [targets.nginx-alpine]
 image = "example/nginx-alpine"

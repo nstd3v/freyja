@@ -5,19 +5,18 @@ use freyja_core::{
     planner::{PlanReason, Planner, TargetPlan},
 };
 
-use crate::helpers::{load_spec, load_state, validate_state_path};
+use crate::helpers::{load_state, validate_state_path};
 
 pub async fn execute(
     target_name: &str,
-    spec_path: &Path,
+    spec: &freyja_core::spec::Spec,
     state_path: &Path,
     planner: &Planner<'_>,
 ) -> Result<(), Error> {
-    let spec = load_spec(spec_path)?;
-    validate_state_path(&spec, state_path)?;
+    validate_state_path(spec, state_path)?;
     let state = load_state(state_path)?;
 
-    let plan = planner.plan(&spec, &state).await?;
+    let plan = planner.plan(spec, &state).await?;
 
     let target = plan
         .targets

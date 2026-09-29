@@ -19,6 +19,7 @@ fn cli_routes_alt_rpm_dependencies_to_resolver() {
         r#"version = "1"
 title = "ALT RPM wiring"
 [extensions]
+alt_rpm.enabled = true
 [targets.app]
 image = "example/app"
 tags = ["latest"]

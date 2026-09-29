@@ -56,10 +56,19 @@ Top level:
 | --- | --- |
 | `version` | Spec version (string; the example uses `"1"`, distinct from the CLI package version) |
 | `title` | Human-readable project title |
-| `[extensions]` | Currently an inert table; does not control resolver registration |
+| `[extensions]` | Optional extension switches; resolvers are registered only when their `enabled` flag is `true` |
 | `[targets.<name>]` | One entry per image to build |
 
-The CLI always registers `oci`, `alt_rpm`, and `apk` resolvers. Entries such as `oci.enabled`, `oci.registry`, `alt_rpm.enabled`, and `alt_rpm.repository` in `[extensions]` are currently ignored; they neither enable/disable resolvers nor override registries/repositories. ALT RPM currently supports the built-in `sisyphus` repository over FTP; HTTP repositories are not implemented.
+Declare only the resolvers a spec needs. Omitting `[extensions]`, omitting an extension entry, or setting `enabled = false` leaves that resolver unregistered; using its dependency type then fails during planning. For example:
+
+```toml
+[extensions]
+oci.enabled = true
+alt_rpm.enabled = true
+apk.enabled = false
+```
+
+The supported switches are `oci.enabled`, `alt_rpm.enabled`, and `apk.enabled`. The optional `oci.registry` and `alt_rpm.repository` settings are parsed for compatibility but **do not** override a resolver yet; avoid setting them. ALT RPM supports the built-in `sisyphus` repository over FTP; HTTP repositories are not implemented. The CLI loads one spec for both resolver registration and planning/building.
 
 Target fields (`[targets.<name>]`):
 

@@ -7,8 +7,11 @@ use freyja_core::{
 
 use freyja_core::error::Error;
 
-use crate::helpers::{load_spec, load_state, validate_state_path};
+#[cfg(test)]
+use crate::helpers::load_spec;
+use crate::helpers::{load_state, validate_state_path};
 
+#[cfg(test)]
 pub async fn execute(
     spec_path: &Path,
     state_path: &Path,
@@ -16,10 +19,19 @@ pub async fn execute(
     builder: &dyn Builder,
 ) -> Result<(), Error> {
     let spec = load_spec(spec_path)?;
-    validate_state_path(&spec, state_path)?;
+    execute_with_spec(&spec, state_path, planner, builder).await
+}
+
+pub async fn execute_with_spec(
+    spec: &freyja_core::spec::Spec,
+    state_path: &Path,
+    planner: &Planner<'_>,
+    builder: &dyn Builder,
+) -> Result<(), Error> {
+    validate_state_path(spec, state_path)?;
     let mut state = load_state(state_path)?;
 
-    let plan = planner.plan(&spec, &state).await?;
+    let plan = planner.plan(spec, &state).await?;
 
     for target_plan in plan.targets {
         match target_plan.action {

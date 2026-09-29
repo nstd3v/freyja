@@ -19,6 +19,7 @@ fn cli_routes_apk_to_resolver_and_rejects_unsupported_repository() {
         r#"version = "1"
 title = "APK routing"
 [extensions]
+apk.enabled = true
 [targets.app]
 image = "example/app"
 tags = ["latest"]

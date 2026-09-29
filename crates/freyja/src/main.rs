@@ -4,6 +4,7 @@ mod helpers;
 
 use clap::Parser;
 
+use crate::helpers::load_spec;
 use cli::{Cli, Command};
 use freyja_builder_podman::BuildkitBuilder;
 use freyja_core::{error::Error, planner::Planner, resolver::ResolverRegistry};
@@ -21,28 +22,39 @@ async fn main() {
 
 async fn run() -> Result<(), Error> {
     let cli = Cli::parse();
+    let spec = load_spec(&cli.file)?;
 
     let mut resolvers = ResolverRegistry::new();
-    resolvers.register(OciResolver::new());
-
-    let cache = cli.freyja_dir.join("cache").join("alt-rpm");
-    resolvers.register(AltRpmResolver::new(cache));
-    resolvers.register(ApkResolver::new(cli.freyja_dir.join("cache").join("apk")));
+    if spec.extensions.oci.as_ref().is_some_and(|ext| ext.enabled) {
+        resolvers.register(OciResolver::new());
+    }
+    if spec
+        .extensions
+        .alt_rpm
+        .as_ref()
+        .is_some_and(|ext| ext.enabled)
+    {
+        let cache = cli.freyja_dir.join("cache").join("alt-rpm");
+        resolvers.register(AltRpmResolver::new(cache));
+    }
+    if spec.extensions.apk.as_ref().is_some_and(|ext| ext.enabled) {
+        resolvers.register(ApkResolver::new(cli.freyja_dir.join("cache").join("apk")));
+    }
 
     let planner = Planner::new(&resolvers);
     let builder = BuildkitBuilder::new();
 
     match cli.command {
         Command::Plan(_args) => {
-            commands::plan(&cli.file, &cli.state, &planner).await?;
+            commands::plan(&spec, &cli.state, &planner).await?;
         }
 
         Command::Build(_args) => {
-            commands::build(&cli.file, &cli.state, &planner, &builder).await?;
+            commands::build(&spec, &cli.state, &planner, &builder).await?;
         }
 
         Command::Explain(args) => {
-            commands::explain(&args.target, &cli.file, &cli.state, &planner).await?
+            commands::explain(&args.target, &spec, &cli.state, &planner).await?
         }
     }
 
