@@ -92,11 +92,6 @@ mod tests {
         }
 
         header.extend_from_slice(&store);
-
-        while header.len() % 8 != 0 {
-            header.push(0);
-        }
-
         header
     }
 
@@ -139,6 +134,22 @@ mod tests {
 
         assert_eq!(package.name, "nginx");
         assert_eq!(package.version, "1.28.0");
+    }
+
+    #[test]
+    fn parses_adjacent_unpadded_rpm_headers() {
+        // ALT's pkglist places the next header immediately after the store,
+        // even when the store ends at a non-eight-byte offset.
+        let mut first = package_header("bash", None, "5.2", "alt1", "x86_64");
+        let count = u32::from_be_bytes(first[8..12].try_into().unwrap()) as usize;
+        let store = u32::from_be_bytes(first[12..16].try_into().unwrap()) as usize;
+        let raw_end = 16 + 16 * count + store;
+        assert_ne!(raw_end % 8, 0, "fixture must have an unaligned store");
+        assert_eq!(raw_end, first.len());
+        first.extend(package_header("nginx", None, "1.28.0", "alt1", "x86_64"));
+
+        let packages = parse_packages(&first).unwrap();
+        assert_eq!(packages.get("nginx").unwrap().version, "1.28.0");
     }
 
     #[test]

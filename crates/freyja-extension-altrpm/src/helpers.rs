@@ -83,16 +83,6 @@ pub(crate) fn parse_header(input: &[u8]) -> Result<(Package, usize), AltRpmError
 
     let epoch = get_u32(&entries, store, RPMTAG_EPOCH)?;
 
-    // RPM headers are padded to an eight-byte boundary in pkglist files.
-    let consumed = total_size
-        .checked_add(7)
-        .ok_or_else(|| AltRpmError::InvalidPackageList("RPM header size overflow".to_owned()))?
-        & !7;
-    if input.len() < consumed {
-        return Err(AltRpmError::InvalidPackageList(
-            "truncated RPM header padding".to_owned(),
-        ));
-    }
     Ok((
         Package {
             name,
@@ -101,7 +91,7 @@ pub(crate) fn parse_header(input: &[u8]) -> Result<(Package, usize), AltRpmError
             release,
             arch,
         },
-        consumed,
+        total_size,
     ))
 }
 
