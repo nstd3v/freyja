@@ -1,0 +1,17 @@
+version = "1"
+title = "Alpine nginx example"
+
+[extensions]
+
+[targets.nginx-alpine]
+image = "example/nginx-alpine"
+tags = ["latest"]
+arches = ["amd64"]
+build.context = "."
+
+[targets.nginx-alpine.dependencies.nginx_package]
+type = "apk"
+release = "v3.24"
+repository = "main"
+arch = "x86_64"
+package = "nginx"

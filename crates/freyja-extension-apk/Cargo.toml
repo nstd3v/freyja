@@ -1,0 +1,15 @@
+[package]
+name = "freyja-extension-apk"
+version = "0.1.1"
+edition = "2024"
+
+[dependencies]
+freyja-core.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+toml.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+reqwest.workspace = true
+flate2 = "1"
+tar = "0.4"

@@ -8,7 +8,7 @@ Freyja is a local-first, dependency-aware OCI image build orchestrator. It plans
 
 - Rust stable (the workspace uses edition 2024)
 - podman with buildx support — builds are run via `podman buildx`
-- Network access to OCI registries and the ALT FTP mirror when using those dependency types
+- Network access to OCI registries, the ALT FTP mirror, or Alpine's HTTPS repository when using those dependency types
 
 ## Build
 
@@ -36,7 +36,7 @@ Global flags (accepted by all subcommands):
 
 | Flag | Default | Description |
 | --- | --- | --- |
-| `-d, --dir <DIR>` | `.freyja` | Directory for the ALT RPM cache |
+| `-d, --dir <DIR>` | `.freyja` | Directory for ALT RPM and APK index caches |
 | `-f, --file <FILE>` | `freyja.toml` | Path to the Freyja configuration file |
 | `-s, --state <STATE>` | `.freyja/state.toml` | Path to the state file |
 
@@ -59,7 +59,7 @@ Top level:
 | `[extensions]` | Currently an inert table; does not control resolver registration |
 | `[targets.<name>]` | One entry per image to build |
 
-The CLI always registers both `oci` and `alt_rpm` resolvers. Entries such as `oci.enabled`, `oci.registry`, `alt_rpm.enabled`, and `alt_rpm.repository` in `[extensions]` are currently ignored; they neither enable/disable resolvers nor override registries/repositories. ALT RPM currently supports the built-in `sisyphus` repository over FTP; HTTP repositories are not implemented.
+The CLI always registers `oci`, `alt_rpm`, and `apk` resolvers. Entries such as `oci.enabled`, `oci.registry`, `alt_rpm.enabled`, and `alt_rpm.repository` in `[extensions]` are currently ignored; they neither enable/disable resolvers nor override registries/repositories. ALT RPM currently supports the built-in `sisyphus` repository over FTP; HTTP repositories are not implemented.
 
 Target fields (`[targets.<name>]`):
 
@@ -88,13 +88,25 @@ Every dependency has a `type` plus type-specific fields. The current Podman comm
 | `arch` | Package architecture, e.g. `x86_64`, `aarch64` |
 | `package` | Package name to resolve |
 
-See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for a concrete reference.
+`apk` (official stable Alpine repositories only):
+
+| Field | Description |
+| --- | --- |
+| `release` | Explicit stable branch such as `v3.24` (no `latest` or `edge`) |
+| `repository` | `main` or `community`; custom URLs are unsupported |
+| `arch` | APK architecture such as `x86_64` or `aarch64` (not Freyja's `amd64` target label) |
+| `package` | Exact package name in the selected index |
+
+The resolver reads `https://dl-cdn.alpinelinux.org/alpine/<release>/<repository>/<arch>/APKINDEX.tar.gz`, compares the package version and index checksum, and does not pin the resolved version into `apk add`. See [`examples/nginx-alpine/freyja.toml`](./examples/nginx-alpine/freyja.toml). From the repository root, run `target/release/freyja --file examples/nginx-alpine/freyja.toml --state .freyja/alpine-state.toml plan` (the state must stay outside the build context).
+
+See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for the ALT reference.
 
 ## State & cache
 
 - The state file stores resolved-dependency and build-input fingerprints per target (saved via a temporary file and rename). `plan` compares them to decide `BUILD` or `SKIP`; old state without a build-input fingerprint triggers one rebuild. Keep the state file **outside every build context** (use `--state`): Freyja rejects a state path inside a context to prevent a rebuild loop. `SKIP` is a fingerprint decision, not a check that the locally tagged image still exists.
 - Build-input fingerprints conservatively hash all regular files and directory paths in the context, including files ignored by Podman and generated files. Keep contexts small; Git/Cargo ignores do not limit this hash. Symlinks and special files in the context are currently rejected rather than silently skipped.
 - `<DIR>/cache/alt-rpm/` (by default `.freyja/cache/alt-rpm/`) caches ALT package lists fetched from the mirror for up to 1 hour.
+- `<DIR>/cache/apk/<release>/<repository>/<arch>/APKINDEX.tar.gz` caches Alpine indexes for up to 1 hour. A stale index must be refreshed; network failures return an error rather than silently planning from stale metadata. Freyja fetches over HTTPS but does **not** verify the APKINDEX signature.
 
 ## Project layout
 
@@ -104,6 +116,7 @@ See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for a c
 | [`crates/freyja-core`](./crates/freyja-core) | Spec model, resolver registry, planner, state; `DependencyResolver` and `Builder` traits |
 | [`crates/freyja-extension-oci`](./crates/freyja-extension-oci) | Resolves `oci` dependencies (image reference to manifest digest) |
 | [`crates/freyja-extension-altrpm`](./crates/freyja-extension-altrpm) | Resolves `alt_rpm` dependencies from ALT package lists over FTP |
+| [`crates/freyja-extension-apk`](./crates/freyja-extension-apk) | Resolves `apk` dependencies from Alpine APKINDEX archives over HTTPS |
 | [`crates/freyja-builder-podman`](./crates/freyja-builder-podman) | Implements `Builder`; shells out to `podman buildx` |
 
 ## Extending
@@ -113,6 +126,7 @@ To add a new dependency type or builder engine, implement the core traits (`Depe
 ## Examples
 
 - [`examples/nginx-alt/`](./examples/nginx-alt/) — an nginx image depending on an ALT base image (`oci`) and the `nginx` package (`alt_rpm`).
+- [`examples/nginx-alpine/`](./examples/nginx-alpine/) — an Alpine nginx image with an `apk` rebuild trigger; its `apk add` command is not pinned to the resolved version.
 
 ## License
 
