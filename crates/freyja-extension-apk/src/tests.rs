@@ -1,4 +1,5 @@
-use super::{ApkResolver, extract_index, parse_index};
+use super::ApkResolver;
+use crate::index::{extract_index, parse_index};
 use freyja_core::spec::{DependencyResolver, DependencySpec};
 use freyja_core::{
     planner::{PlanAction, Planner},

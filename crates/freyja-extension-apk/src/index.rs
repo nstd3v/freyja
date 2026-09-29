@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, io::Read};
 
-use thiserror::Error;
+use crate::error::ApkError;
 
 const MAX_INDEX_SIZE: u64 = 16 * 1024 * 1024;
 const MAX_TAR_SIZE: u64 = 32 * 1024 * 1024;
@@ -9,22 +9,6 @@ const MAX_TAR_SIZE: u64 = 32 * 1024 * 1024;
 pub(crate) struct Package {
     pub version: String,
     pub checksum: String,
-}
-
-#[derive(Debug, Error)]
-pub enum ApkError {
-    #[error("invalid APK dependency: {0}")]
-    InvalidConfig(String),
-    #[error("unsupported APK repository `{0}`")]
-    UnsupportedRepository(String),
-    #[error("failed to fetch APK index: {0}")]
-    Http(#[from] reqwest::Error),
-    #[error("failed to access APK cache: {0}")]
-    Cache(#[from] std::io::Error),
-    #[error("invalid APK index: {0}")]
-    InvalidIndex(String),
-    #[error("APK package `{0}` not found")]
-    PackageNotFound(String),
 }
 
 pub(crate) fn extract_index(compressed: &[u8]) -> Result<Vec<u8>, ApkError> {
