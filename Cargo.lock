@@ -464,7 +464,7 @@ dependencies = [
 
 [[package]]
 name = "freyja"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "clap",
@@ -478,7 +478,7 @@ dependencies = [
 
 [[package]]
 name = "freyja-builder-podman"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "freyja-core",
@@ -487,7 +487,7 @@ dependencies = [
 
 [[package]]
 name = "freyja-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "serde",
@@ -499,7 +499,7 @@ dependencies = [
 
 [[package]]
 name = "freyja-extension-altrpm"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "freyja-core",
@@ -513,7 +513,7 @@ dependencies = [
 
 [[package]]
 name = "freyja-extension-oci"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "freyja-core",
@@ -1757,9 +1757,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "suppaftp"
-version = "12.0.1"
+version = "12.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba93b140f4d07f1b3f3fb4d7264b2d422d5c8b4e925eb6a2646e1342d5d2070a"
+checksum = "b161d71217da0cc91bd09c8f98ac5ad2a5e5b2735c6dfe1c6cb08b4471612f35"
 dependencies = [
  "async-trait",
  "chrono",
