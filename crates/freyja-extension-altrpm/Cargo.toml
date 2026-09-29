@@ -1,0 +1,14 @@
+[package]
+name = "freyja-extension-altrpm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+freyja-core.workspace = true
+async-trait.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+tokio.workspace = true
+serde.workspace = true
+xz2.workspace = true
+suppaftp.workspace = true

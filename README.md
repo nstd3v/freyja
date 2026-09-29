@@ -20,7 +20,7 @@ The binary is named `freyja`.
 
 ## Quick start
 
-From the [`examples/nginx-alt/`](./examples/nginx-alt/) directory (note: this example still requires the disabled `alt_rpm` resolver and will fail until that extension is restored or the dependency is removed):
+From the [`examples/nginx-alt/`](./examples/nginx-alt/) directory (requires access to the OCI registry and ALT FTP mirror):
 
 ```sh
 freyja --state ../.freyja/state.toml plan           # show which targets need to be rebuilt
@@ -64,7 +64,7 @@ Extensions:
 | `alt_rpm.enabled` | Enable the `alt_rpm` dependency type |
 | `alt_rpm.repository` | Optional repository override |
 
-Note: extension settings are parsed but not yet enforced — both resolvers are currently always registered.
+Note: extension settings are parsed but not yet enforced — both resolvers are always registered. ALT RPM currently supports the built-in `sisyphus` repository over FTP; HTTP repositories are not implemented. Resolved OCI digests and ALT RPM versions trigger rebuild decisions but are not pinned into the Podman build.
 
 Target fields (`[targets.<name>]`):
 
@@ -109,7 +109,7 @@ See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for a c
 | [`crates/freyja-core`](./crates/freyja-core) | Spec model, resolver registry, planner, state; `DependencyResolver` and `Builder` traits |
 | [`crates/freyja-extension-oci`](./crates/freyja-extension-oci) | Resolves `oci` dependencies (image reference to manifest digest) |
 | [`crates/freyja-extension-altrpm`](./crates/freyja-extension-altrpm) | Resolves `alt_rpm` dependencies from ALT package lists over FTP |
-| [`crates/freyja-builder-buildkit`](./crates/freyja-builder-buildkit) | Implements `Builder`; shells out to `podman buildx` |
+| [`crates/freyja-builder-podman`](./crates/freyja-builder-podman) | Implements `Builder`; shells out to `podman buildx` |
 
 ## Extending
 
