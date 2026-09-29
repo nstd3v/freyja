@@ -4,6 +4,9 @@ Freyja is a local-first, dependency-aware OCI image build orchestrator. It plans
 
 > **WIP** -- project right now in active development
 
+> **AI-driven development** -- right now work with this code base happens with usage of AI.
+  Maybe i'll rewrite it manualy later. Right now its PoC developemnt.
+
 ## Prerequisites
 
 - Rust stable (the workspace uses edition 2024)
