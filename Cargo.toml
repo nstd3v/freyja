@@ -1,19 +1,26 @@
 [workspace]
 resolver = "3"
-members = ["crates/freyja", "crates/freyja-builder-buildkit","crates/freyja-core", "crates/freyja-extension-altrpm", "crates/freyja-extension-oci"]
+members = [
+    "crates/freyja",
+    "crates/freyja-core",
+    "crates/freyja-extension-oci",
+    "crates/freyja-extension-altrpm",
+    "crates/freyja-builder-podman",
+]
 
 [workspace.dependencies]
 freyja-core = { path = "crates/freyja-core" }
 freyja-extension-oci = { path = "crates/freyja-extension-oci" }
 freyja-extension-altrpm = { path = "crates/freyja-extension-altrpm" }
-freyja-builder-buildkit = { path = "crates/freyja-builder-buildkit" }
+freyja-builder-podman = { path = "crates/freyja-builder-podman" }
 async-trait = "0.1.92"
 clap = { version = "4.6.7", features = ["derive"] }
 serde = { version = "1.0.229", features = ["derive"] }
+sha2 = "0.11.0"
 thiserror = "2.0.20"
 toml = "1.1.6"
 oci-client = "0.17.0"
-tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "process", "io-util"] }
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "process", "io-util", "fs", "sync"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 suppaftp = { version = "12.0.1", features = ["tokio"] }
 xz2 = "0.1.7"

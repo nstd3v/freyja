@@ -5,7 +5,7 @@ mod helpers;
 use clap::Parser;
 
 use cli::{Cli, Command};
-use freyja_builder_buildkit::BuildkitBuilder;
+use freyja_builder_podman::BuildkitBuilder;
 use freyja_core::{error::Error, planner::Planner, resolver::ResolverRegistry};
 use freyja_extension_altrpm::AltRpmResolver;
 use freyja_extension_oci::OciResolver;
@@ -28,7 +28,7 @@ async fn run() -> Result<(), Error> {
     resolvers.register(AltRpmResolver::new(cache));
 
     let planner = Planner::new(&resolvers);
-    let builder = BuildkitBuilder {};
+    let builder = BuildkitBuilder::new();
 
     match cli.command {
         Command::Plan(_args) => {

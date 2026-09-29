@@ -13,6 +13,7 @@ pub struct TargetPlan {
     pub action: PlanAction,
     pub reasons: Vec<PlanReason>,
     pub dependencies: BTreeMap<String, ResolvedDependency>,
+    pub build_fingerprint: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -24,6 +25,7 @@ pub enum PlanAction {
 #[derive(Debug, Clone)]
 pub enum PlanReason {
     NeverBuilt,
+    BuildInputChanged,
 
     DependencyChanged {
         name: String,

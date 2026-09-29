@@ -1,0 +1,13 @@
+[package]
+name = "freyja"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+freyja-core.workspace = true
+freyja-extension-oci.workspace = true
+freyja-extension-altrpm.workspace = true
+freyja-builder-buildkit.workspace = true
+clap.workspace = true
+tokio.workspace = true
+toml.workspace = true

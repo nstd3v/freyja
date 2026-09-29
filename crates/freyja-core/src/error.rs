@@ -30,6 +30,11 @@ pub enum Error {
         #[source]
         source: toml::ser::Error,
     },
+    #[error("failed to serialize build input")]
+    SerializeBuildInput {
+        #[source]
+        source: toml::ser::Error,
+    },
 
     #[error("invalid configuration for dependency type `{kind}`")]
     InvalidDependencyConfig {
@@ -66,4 +71,14 @@ pub enum Error {
 
     #[error("build failed for target `{target}` with exit status {status:?}")]
     BuildFailed { target: String, status: Option<i32> },
+
+    #[error("failed to read build input `{path}`: {source}")]
+    BuildInput {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("invalid build input `{path}`: {reason}")]
+    InvalidBuildInput { path: PathBuf, reason: String },
 }

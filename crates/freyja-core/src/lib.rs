@@ -1,5 +1,6 @@
 pub mod builder;
 pub mod error;
+pub mod fingerprint;
 pub mod planner;
 pub mod resolver;
 pub mod spec;

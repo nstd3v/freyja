@@ -7,7 +7,6 @@ use freyja_core::{
     error::Error,
     spec::{DependencyResolver, DependencySpec, ResolvedDependency},
 };
-use reqwest::Client;
 use std::{collections::BTreeMap, io::Read, path::PathBuf};
 use suppaftp::{tokio::AsyncFtpStream, types::FileType};
 use tokio::io::AsyncReadExt;
@@ -15,8 +14,6 @@ use tokio::sync::Mutex;
 use xz2::read::XzDecoder;
 
 pub struct AltRpmResolver {
-    #[allow(unused)]
-    client: Client,
     repositories: BTreeMap<String, Repository>,
     cache_dir: PathBuf,
     package_lists: Mutex<BTreeMap<(String, String), BTreeMap<String, Package>>>,
@@ -27,7 +24,6 @@ impl AltRpmResolver {
         let repositories = default_repositories();
 
         Self {
-            client: Client::new(),
             repositories,
             cache_dir: cache_dir.into(),
             package_lists: Mutex::new(BTreeMap::new()),
@@ -158,19 +154,17 @@ impl AltRpmResolver {
 
     async fn fetch_pkglist(
         &self,
-        repository_name: &str,
+        _repository_name: &str,
         repository: &Repository,
         arch: &str,
     ) -> Result<Vec<u8>, AltRpmError> {
         match repository.transport {
             RepositoryTransport::Http => {
-                todo!()
-                //self.fetch_pkglist_http(repository_name, repository, arch)
-                //    .await
+                Err(AltRpmError::UnsupportedTransport { transport: "HTTP" })
             }
 
             RepositoryTransport::Ftp => {
-                self.fetch_pkglist_ftp(repository_name, repository, arch)
+                self.fetch_pkglist_ftp(_repository_name, repository, arch)
                     .await
             }
         }

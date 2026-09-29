@@ -39,14 +39,23 @@ impl State {
         &mut self,
         name: String,
         dependencies: BTreeMap<String, ResolvedDependency>,
+        build_fingerprint: String,
     ) {
-        self.targets.insert(name, TargetState { dependencies });
+        self.targets.insert(
+            name,
+            TargetState {
+                dependencies,
+                build_fingerprint: Some(build_fingerprint),
+            },
+        );
     }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TargetState {
     pub dependencies: BTreeMap<String, ResolvedDependency>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_fingerprint: Option<String>,
 }
 
 fn temporary_path(path: &Path) -> PathBuf {

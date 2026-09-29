@@ -20,12 +20,12 @@ The binary is named `freyja`.
 
 ## Quick start
 
-From the [`examples/nginx-alt/`](./examples/nginx-alt/) directory:
+From the [`examples/nginx-alt/`](./examples/nginx-alt/) directory (requires access to the OCI registry and ALT FTP mirror):
 
 ```sh
-freyja plan           # show which targets need to be rebuilt
-freyja build          # build the targets that need it
-freyja explain nginx  # explain why a target needs to be rebuilt
+freyja --state ../.freyja/state.toml plan           # show which targets need to be rebuilt
+freyja --state ../.freyja/state.toml build          # build the targets that need it
+freyja --state ../.freyja/state.toml explain nginx  # explain why a target needs to be rebuilt
 ```
 
 ## CLI reference
@@ -64,7 +64,7 @@ Extensions:
 | `alt_rpm.enabled` | Enable the `alt_rpm` dependency type |
 | `alt_rpm.repository` | Optional repository override |
 
-Note: extension settings are parsed but not yet enforced — both resolvers are currently always registered.
+Note: extension settings are parsed but not yet enforced — both resolvers are always registered. ALT RPM currently supports the built-in `sisyphus` repository over FTP; HTTP repositories are not implemented. Resolved OCI digests and ALT RPM versions trigger rebuild decisions but are not pinned into the Podman build.
 
 Target fields (`[targets.<name>]`):
 
@@ -73,8 +73,8 @@ Target fields (`[targets.<name>]`):
 | `image` | Image reference to build and tag |
 | `tags` | Tags to apply to the image |
 | `arches` | Architectures to build: `amd64`, `arm64` |
-| `build.context` | Build context path |
-| `build.dockerfile` | Dockerfile inside the context (default `Dockerfile`) |
+| `build.context` | Build context path, resolved relative to the spec file's directory |
+| `build.dockerfile` | Dockerfile inside the context (default `Dockerfile`); passed to Podman with `-f` |
 | `[targets.<name>.dependencies.<dep>]` | Declared dependencies of the target |
 
 Every dependency has a `type` plus type-specific fields.
@@ -97,7 +97,8 @@ See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for a c
 
 ## State & cache
 
-- `.freyja/state.toml` — stores the resolved-dependency fingerprints per target (saved atomically). `plan` compares the current fingerprints against the stored ones to decide `BUILD` or `SKIP` for each target; after a successful build, `build` records the new fingerprints.
+- The state file stores resolved-dependency and build-input fingerprints per target (saved atomically). `plan` compares them to decide `BUILD` or `SKIP`; old state without a build-input fingerprint triggers one rebuild. Keep the state file **outside every build context** (use `--state`): Freyja rejects a state path inside a context to prevent a rebuild loop.
+- Build-input fingerprints conservatively hash all regular files and directory paths in the context, including files ignored by Podman and generated files. Keep contexts small; Git/Cargo ignores do not limit this hash. Symlinks and special files in the context are currently rejected rather than silently skipped.
 - `.freyja/cache/alt-rpm/` — caches ALT package lists fetched from mirrors, so repeated runs do not re-download them within the cache TTL (1 hour).
 
 ## Project layout
@@ -108,7 +109,7 @@ See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for a c
 | [`crates/freyja-core`](./crates/freyja-core) | Spec model, resolver registry, planner, state; `DependencyResolver` and `Builder` traits |
 | [`crates/freyja-extension-oci`](./crates/freyja-extension-oci) | Resolves `oci` dependencies (image reference to manifest digest) |
 | [`crates/freyja-extension-altrpm`](./crates/freyja-extension-altrpm) | Resolves `alt_rpm` dependencies from ALT package lists over FTP |
-| [`crates/freyja-builder-buildkit`](./crates/freyja-builder-buildkit) | Implements `Builder`; shells out to `podman buildx` |
+| [`crates/freyja-builder-podman`](./crates/freyja-builder-podman) | Implements `Builder`; shells out to `podman buildx` |
 
 ## Extending
 

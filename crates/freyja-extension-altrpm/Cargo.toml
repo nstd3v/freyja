@@ -9,7 +9,6 @@ async-trait.workspace = true
 thiserror.workspace = true
 toml.workspace = true
 tokio.workspace = true
-reqwest.workspace = true
 serde.workspace = true
 xz2.workspace = true
 suppaftp.workspace = true

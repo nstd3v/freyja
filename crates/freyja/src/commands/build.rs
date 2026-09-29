@@ -7,7 +7,7 @@ use freyja_core::{
 
 use freyja_core::error::Error;
 
-use crate::helpers::{load_spec, load_state};
+use crate::helpers::{load_spec, load_state, validate_state_path};
 
 pub async fn execute(
     spec_path: &Path,
@@ -16,6 +16,7 @@ pub async fn execute(
     builder: &dyn Builder,
 ) -> Result<(), Error> {
     let spec = load_spec(spec_path)?;
+    validate_state_path(&spec, state_path)?;
     let mut state = load_state(state_path)?;
 
     let plan = planner.plan(&spec, &state).await?;
@@ -29,7 +30,11 @@ pub async fn execute(
 
                 builder.build(&target_plan.target, target).await?;
 
-                state.record_build(target_plan.target, target_plan.dependencies);
+                state.record_build(
+                    target_plan.target,
+                    target_plan.dependencies,
+                    target_plan.build_fingerprint,
+                );
 
                 state.save(state_path)?;
             }
@@ -42,3 +47,6 @@ pub async fn execute(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;

@@ -4,17 +4,11 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum AltRpmError {
+    #[error("{transport} transport is not implemented for ALT RPM repositories")]
+    UnsupportedTransport { transport: &'static str },
+
     #[error("unknown ALT RPM repository `{repository}`")]
     UnknownRepository { repository: String },
-
-    #[allow(unused)]
-    #[error("failed to fetch `{url}`")]
-    Http {
-        url: String,
-
-        #[source]
-        source: reqwest::Error,
-    },
 
     #[error("FTP request to `{host}` failed: {source}")]
     Ftp {

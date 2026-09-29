@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use super::{Plan, PlanAction, PlanReason, TargetPlan};
 use crate::{
     error::Error,
+    fingerprint::fingerprint,
     resolver::ResolverRegistry,
     spec::{Spec, deps::ResolvedDependency},
     state::State,
@@ -21,6 +22,7 @@ impl<'a> Planner<'a> {
         let mut targets = Vec::new();
 
         for (name, target) in &spec.targets {
+            let build_fingerprint = fingerprint(target)?;
             let mut resolved = BTreeMap::new();
 
             for (name, dependency) in &target.dependencies {
@@ -36,7 +38,13 @@ impl<'a> Planner<'a> {
                     vec![PlanReason::NeverBuilt]
                 }
 
-                Some(previous) => compare_dependencies(&previous.dependencies, &resolved),
+                Some(previous) => {
+                    let mut reasons = compare_dependencies(&previous.dependencies, &resolved);
+                    if previous.build_fingerprint.as_deref() != Some(&build_fingerprint) {
+                        reasons.push(PlanReason::BuildInputChanged);
+                    }
+                    reasons
+                }
             };
 
             let action = if reasons.is_empty() {
@@ -50,6 +58,7 @@ impl<'a> Planner<'a> {
                 action,
                 reasons,
                 dependencies: resolved,
+                build_fingerprint,
             });
         }
 

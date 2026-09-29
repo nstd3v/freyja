@@ -1,0 +1,10 @@
+[package]
+name = "freyja-extension-oci"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-trait.workspace = true
+freyja-core.workspace = true
+oci-client.workspace = true
+serde.workspace = true

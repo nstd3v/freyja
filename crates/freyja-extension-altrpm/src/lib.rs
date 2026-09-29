@@ -9,7 +9,10 @@ pub use resolver::AltRpmResolver;
 #[cfg(test)]
 mod tests {
     use crate::consts::*;
-    use crate::helpers::{find_package, parse_header};
+    use crate::helpers::{parse_header, parse_packages};
+    use crate::{AltRpmResolver, models::RepositoryTransport};
+    use freyja_core::spec::{DependencyResolver, DependencySpec};
+    use std::io::Write;
 
     fn string_entry(tag: u32, offset: usize) -> [u8; 16] {
         let mut result = [0u8; 16];
@@ -89,11 +92,6 @@ mod tests {
         }
 
         header.extend_from_slice(&store);
-
-        while header.len() % 8 != 0 {
-            header.push(0);
-        }
-
         header
     }
 
@@ -131,16 +129,91 @@ mod tests {
 
         pkglist.extend(package_header("nginx", None, "1.28.0", "alt1", "x86_64"));
 
-        let package = find_package(&pkglist, "nginx").unwrap().unwrap();
+        let packages = parse_packages(&pkglist).unwrap();
+        let package = packages.get("nginx").unwrap();
 
         assert_eq!(package.name, "nginx");
         assert_eq!(package.version, "1.28.0");
     }
 
     #[test]
+    fn parses_adjacent_unpadded_rpm_headers() {
+        // ALT's pkglist places the next header immediately after the store,
+        // even when the store ends at a non-eight-byte offset.
+        let mut first = package_header("bash", None, "5.2", "alt1", "x86_64");
+        let count = u32::from_be_bytes(first[8..12].try_into().unwrap()) as usize;
+        let store = u32::from_be_bytes(first[12..16].try_into().unwrap()) as usize;
+        let raw_end = 16 + 16 * count + store;
+        assert_ne!(raw_end % 8, 0, "fixture must have an unaligned store");
+        assert_eq!(raw_end, first.len());
+        first.extend(package_header("nginx", None, "1.28.0", "alt1", "x86_64"));
+
+        let packages = parse_packages(&first).unwrap();
+        assert_eq!(packages.get("nginx").unwrap().version, "1.28.0");
+    }
+
+    #[test]
     fn returns_none_for_missing_package() {
         let bytes = package_header("bash", None, "5.2", "alt1", "x86_64");
 
-        assert!(find_package(&bytes, "nginx").unwrap().is_none());
+        assert!(!parse_packages(&bytes).unwrap().contains_key("nginx"));
+    }
+
+    fn dependency(repository: &str) -> DependencySpec {
+        let mut config = toml::Table::new();
+        config.insert("repository".into(), repository.into());
+        config.insert("arch".into(), "x86_64".into());
+        config.insert("package".into(), "nginx".into());
+        DependencySpec {
+            kind: "alt_rpm".into(),
+            config,
+        }
+    }
+
+    #[tokio::test]
+    async fn resolves_cached_package_without_network() {
+        let root =
+            std::env::temp_dir().join(format!("freyja-alt-rpm-cache-{}", std::process::id()));
+        let cache = root.join("sisyphus/x86_64/pkglist.classic.xz");
+        std::fs::create_dir_all(cache.parent().unwrap()).unwrap();
+        let mut encoder = xz2::write::XzEncoder::new(Vec::new(), 0);
+        encoder
+            .write_all(&package_header(
+                "nginx",
+                Some(2),
+                "1.28.0",
+                "alt1",
+                "x86_64",
+            ))
+            .unwrap();
+        std::fs::write(&cache, encoder.finish().unwrap()).unwrap();
+
+        let resolved = AltRpmResolver::new(&root)
+            .resolve(&dependency("sisyphus"))
+            .await
+            .unwrap();
+        assert_eq!(resolved.reference, "sisyphus/x86_64/nginx");
+        assert_eq!(resolved.fingerprint, "nginx-2:1.28.0-alt1.x86_64");
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn unsupported_http_transport_returns_error_instead_of_panicking() {
+        let resolver = AltRpmResolver::default().with_repository(
+            "http-test",
+            "example.invalid",
+            "/packages",
+            RepositoryTransport::Http,
+        );
+        let error = resolver
+            .resolve(&dependency("http-test"))
+            .await
+            .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("HTTP transport is not implemented"),
+            "{error}"
+        );
     }
 }

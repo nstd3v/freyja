@@ -5,7 +5,7 @@ use freyja_core::{
     planner::{PlanReason, Planner, TargetPlan},
 };
 
-use crate::helpers::{load_spec, load_state};
+use crate::helpers::{load_spec, load_state, validate_state_path};
 
 pub async fn execute(
     target_name: &str,
@@ -14,6 +14,7 @@ pub async fn execute(
     planner: &Planner<'_>,
 ) -> Result<(), Error> {
     let spec = load_spec(spec_path)?;
+    validate_state_path(&spec, state_path)?;
     let state = load_state(state_path)?;
 
     let plan = planner.plan(&spec, &state).await?;
@@ -46,6 +47,9 @@ fn print_explanation(target: &TargetPlan) {
         match reason {
             PlanReason::NeverBuilt => {
                 println!("  - target has never been built");
+            }
+            PlanReason::BuildInputChanged => {
+                println!("  - build inputs changed (or old state has no fingerprint)");
             }
 
             PlanReason::DependencyChanged {
