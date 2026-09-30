@@ -10,6 +10,7 @@ use freyja_builder_podman::BuildkitBuilder;
 use freyja_core::{error::Error, planner::Planner, resolver::ResolverRegistry};
 use freyja_extension_altrpm::AltRpmResolver;
 use freyja_extension_apk::ApkResolver;
+use freyja_extension_deb::DebResolver;
 use freyja_extension_oci::OciResolver;
 
 #[tokio::main]
@@ -39,6 +40,9 @@ async fn run() -> Result<(), Error> {
     }
     if spec.extensions.apk.as_ref().is_some_and(|ext| ext.enabled) {
         resolvers.register(ApkResolver::new(cli.freyja_dir.join("cache").join("apk")));
+    }
+    if spec.extensions.deb.as_ref().is_some_and(|ext| ext.enabled) {
+        resolvers.register(DebResolver::new(cli.freyja_dir.join("cache").join("deb")));
     }
 
     let planner = Planner::new(&resolvers);

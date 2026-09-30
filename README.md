@@ -11,7 +11,8 @@ Freyja is a local-first, dependency-aware OCI image build orchestrator. It plans
 
 - Rust stable (the workspace uses edition 2024)
 - podman with buildx support — builds are run via `podman buildx`
-- Network access to OCI registries, the ALT FTP mirror, or Alpine's HTTPS repository when using those dependency types
+- Network access to OCI registries, the ALT FTP mirror, Alpine's HTTPS repository, or Debian's HTTPS archive when using those dependency types
+- `gpgv` on PATH for Debian `deb` dependencies (the Bookworm signing keys are bundled with the crate; no host keyring is trusted)
 
 ## Build
 
@@ -39,7 +40,7 @@ Global flags (accepted by all subcommands):
 
 | Flag | Default | Description |
 | --- | --- | --- |
-| `-d, --dir <DIR>` | `.freyja` | Directory for ALT RPM and APK index caches |
+| `-d, --dir <DIR>` | `.freyja` | Directory for ALT RPM, APK and Debian index caches |
 | `-f, --file <FILE>` | `freyja.toml` | Path to the Freyja configuration file |
 | `-s, --state <STATE>` | `.freyja/state.toml` | Path to the state file |
 
@@ -71,7 +72,7 @@ alt_rpm.enabled = true
 apk.enabled = false
 ```
 
-The supported switches are `oci.enabled`, `alt_rpm.enabled`, and `apk.enabled`. The optional `oci.registry` and `alt_rpm.repository` settings are parsed for compatibility but **do not** override a resolver yet; avoid setting them. ALT RPM supports the built-in `sisyphus` repository over FTP; HTTP repositories are not implemented. The CLI loads one spec for both resolver registration and planning/building.
+The supported switches are `oci.enabled`, `alt_rpm.enabled`, `apk.enabled`, and `deb.enabled`. The optional `oci.registry` and `alt_rpm.repository` settings are parsed for compatibility but **do not** override a resolver yet; avoid setting them. ALT RPM supports the built-in `sisyphus` repository over FTP; HTTP repositories are not implemented. The CLI loads one spec for both resolver registration and planning/building.
 
 Target fields (`[targets.<name>]`):
 
@@ -111,6 +112,26 @@ Every dependency has a `type` plus type-specific fields. The current Podman comm
 
 The resolver reads `https://dl-cdn.alpinelinux.org/alpine/<release>/<repository>/<arch>/APKINDEX.tar.gz`, compares the package version and index checksum, and does not pin the resolved version into `apk add`. See [`examples/nginx-alpine/freyja.toml`](./examples/nginx-alpine/freyja.toml). From the repository root, run `target/release/freyja --file examples/nginx-alpine/freyja.toml --state .freyja/alpine-state.toml plan` (the state must stay outside the build context).
 
+`deb` (official Debian 12 Bookworm repositories only):
+
+| Field | Description |
+| --- | --- |
+| `suite` | Explicit `bookworm`, `bookworm-updates`, or `bookworm-security` (no moving aliases) |
+| `component` | `main` |
+| `arch` | `amd64` or `arm64` Debian index; does not set the build architecture |
+| `package` | Exact binary package name |
+
+This is a **metadata rebuild trigger**, not package installation, dependency solving, or a pinned image build. The resolved version and artifact SHA256 are compared against state but **not passed into Podman or APT**. `bookworm-security` is a separate explicit dependency: an absent package is an error, never a fallback. See [`examples/nginx-debian/`](./examples/nginx-debian/). From the repository root:
+
+```sh
+target/release/freyja --file examples/nginx-debian/freyja.toml --state .freyja/debian-state.toml plan
+target/release/freyja --file examples/nginx-debian/freyja.toml --state .freyja/debian-state.toml explain nginx
+# Requires Podman; installs the then-current, unpinned nginx version:
+target/release/freyja --file examples/nginx-debian/freyja.toml --state .freyja/debian-state.toml build
+```
+
+The resolver downloads `InRelease` from `deb.debian.org` over HTTPS and verifies a Bookworm archive signature using a bundled suite-specific keyring and `gpgv`. The security Release advertises `updates/main` in `Components`, while the signed SHA256 entry and fetched path are `main/binary-<arch>/Packages.xz`; this mismatch is handled explicitly for that suite. It checks the **compressed** exact `main/binary-<arch>/Packages.xz` size and SHA256 from signed metadata. `Packages` artifact SHA256 is a different checksum. Vendored keys come from `https://ftp-master.debian.org/keys/archive-key-12.asc` (fingerprint `B8B80B5B623EAB6AD8775C45B7C5D7D6350947F8`) and `archive-key-12-security.asc` (`05AB90340C0C5E797F44A8C8254CF3B5AEC0A8F0`); audit and update them deliberately when Debian rotates keys. A newly rotated signer is an error until the trust set is reviewed. For Release files without `Valid-Until` (currently observed in `bookworm` and `bookworm-updates`), the cache is refreshed at least hourly but an old still-valid signed Release replayed by the server cannot be detected; do not treat this as snapshot freshness or reproducibility. Every published `Valid-Until` is enforced (including security). No unsigned fallback exists.
+
 See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for the ALT reference.
 
 ## State & cache
@@ -119,6 +140,7 @@ See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for the
 - Build-input fingerprints conservatively hash all regular files and directory paths in the context, including files ignored by Podman and generated files. Keep contexts small; Git/Cargo ignores do not limit this hash. Symlinks and special files in the context are currently rejected rather than silently skipped.
 - `<DIR>/cache/alt-rpm/` (by default `.freyja/cache/alt-rpm/`) caches ALT package lists fetched from the mirror for up to 1 hour.
 - `<DIR>/cache/apk/<release>/<repository>/<arch>/APKINDEX.tar.gz` caches Alpine indexes for up to 1 hour. A stale index must be refreshed; network failures return an error rather than silently planning from stale metadata. Freyja fetches over HTTPS but does **not** verify the APKINDEX signature.
+- `<DIR>/cache/deb/<suite>/<component>/<arch>/` stores an authenticated `InRelease` and content-addressed verified `Packages.xz`; the Release cache TTL is 1 hour. Every use rechecks the signature, Release dates, index size/hash and bounded parse; corrupt or stale entries must refresh online or resolution fails. Keep the cache outside build contexts.
 
 ## Project layout
 
@@ -129,6 +151,7 @@ See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for the
 | [`crates/freyja-extension-oci`](./crates/freyja-extension-oci) | Resolves `oci` dependencies (image reference to manifest digest) |
 | [`crates/freyja-extension-altrpm`](./crates/freyja-extension-altrpm) | Resolves `alt_rpm` dependencies from ALT package lists over FTP |
 | [`crates/freyja-extension-apk`](./crates/freyja-extension-apk) | Resolves `apk` dependencies from Alpine APKINDEX archives over HTTPS |
+| [`crates/freyja-extension-deb`](./crates/freyja-extension-deb) | Resolves `deb` rebuild triggers against signed Debian Bookworm metadata |
 | [`crates/freyja-builder-podman`](./crates/freyja-builder-podman) | Implements `Builder`; shells out to `podman buildx` |
 
 ## Extending
@@ -139,6 +162,7 @@ To add a new dependency type or builder engine, implement the core traits (`Depe
 
 - [`examples/nginx-alt/`](./examples/nginx-alt/) — an nginx image depending on an ALT base image (`oci`) and the `nginx` package (`alt_rpm`).
 - [`examples/nginx-alpine/`](./examples/nginx-alpine/) — an Alpine nginx image with an `apk` rebuild trigger; its `apk add` command is not pinned to the resolved version.
+- [`examples/nginx-debian/`](./examples/nginx-debian/) — a Debian 12 nginx image with a signed `deb` metadata rebuild trigger; its APT install is explicitly unpinned.
 
 ## License
 

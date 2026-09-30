@@ -6,6 +6,7 @@ members = [
     "crates/freyja-extension-oci",
     "crates/freyja-extension-altrpm",
     "crates/freyja-extension-apk",
+    "crates/freyja-extension-deb",
     "crates/freyja-builder-podman",
 ]
 
@@ -14,6 +15,7 @@ freyja-core = { path = "crates/freyja-core" }
 freyja-extension-oci = { path = "crates/freyja-extension-oci" }
 freyja-extension-altrpm = { path = "crates/freyja-extension-altrpm" }
 freyja-extension-apk = { path = "crates/freyja-extension-apk" }
+freyja-extension-deb = { path = "crates/freyja-extension-deb" }
 freyja-builder-podman = { path = "crates/freyja-builder-podman" }
 async-trait = "0.1.92"
 clap = { version = "4.6.7", features = ["derive"] }
