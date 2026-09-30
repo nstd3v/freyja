@@ -1,0 +1,20 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Codename: bookworm
+Components: main
+Architectures: amd64 arm64
+Date: Wed, 30 Sep 2026 00:00:00 UTC
+Valid-Until: Sat, 30 Sep 2028 00:00:00 UTC
+SHA256:
+ f3eb5909e99738ea1d45288ac1308aa89ceb853594184ae0f2c401f66eb0ab75 132 main/binary-amd64/Packages.xz
+-----BEGIN PGP SIGNATURE-----
+
+iQEcBAEBCAAGBQJqvM9AAAoJELuk92EbfFzubbAIALiHFhvZOTmB6cimxn9TQZc9
+fg8hH5WT2qHVNAF5NGTqrAhkAHkSG0hIEmAC+J8ekPOhzxG7EsQkj66DARVZKerW
+N8Bmx7JEztKhu3dSD+EEMIuQSBTjVbuiUw3nfY7G30iw3dDuHRgd5BaiUEI5gjli
+AWyZuh4hyl5Y1CyQQoUEzrHkbbTys8kimxCa4mY2m1XYvyEuudSJcKixD7nZ+4NB
+JRKI7KTOlkdT6no0ZmlSEknJN02jWqEG7LnmySmnlD9/Lrk4/y1c2pq6EHCVlPeD
+hVFfJ7Jgze1n6qUr8DeH3CN3su7JwP6O3/MU/tPi9OwLp85S3/fX5TRM2mcc57w=
+=Kev3
+-----END PGP SIGNATURE-----

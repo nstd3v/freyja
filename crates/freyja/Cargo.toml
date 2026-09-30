@@ -8,6 +8,7 @@ freyja-core.workspace = true
 freyja-extension-oci.workspace = true
 freyja-extension-altrpm.workspace = true
 freyja-extension-apk.workspace = true
+freyja-extension-deb.workspace = true
 freyja-builder-podman.workspace = true
 clap.workspace = true
 tokio.workspace = true

@@ -8,6 +8,8 @@ pub struct ExtensionsSpec {
     pub alt_rpm: Option<AltRpmExtensionSpec>,
     #[serde(default)]
     pub apk: Option<ApkExtensionSpec>,
+    #[serde(default)]
+    pub deb: Option<DebExtensionSpec>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -30,6 +32,12 @@ pub struct AltRpmExtensionSpec {
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct ApkExtensionSpec {
+    #[serde(default)]
+    pub enabled: bool,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct DebExtensionSpec {
     #[serde(default)]
     pub enabled: bool,
 }

@@ -500,7 +500,7 @@ dependencies = [
 
 [[package]]
 name = "freyja"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "clap",
@@ -508,6 +508,7 @@ dependencies = [
  "freyja-core",
  "freyja-extension-altrpm",
  "freyja-extension-apk",
+ "freyja-extension-deb",
  "freyja-extension-oci",
  "tokio",
  "toml",
@@ -515,7 +516,7 @@ dependencies = [
 
 [[package]]
 name = "freyja-builder-podman"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "freyja-core",
@@ -524,7 +525,7 @@ dependencies = [
 
 [[package]]
 name = "freyja-core"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "serde",
@@ -536,7 +537,7 @@ dependencies = [
 
 [[package]]
 name = "freyja-extension-altrpm"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "freyja-core",
@@ -550,7 +551,7 @@ dependencies = [
 
 [[package]]
 name = "freyja-extension-apk"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "flate2",
@@ -564,8 +565,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "freyja-extension-deb"
+version = "0.2.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "freyja-core",
+ "reqwest 0.12.28",
+ "serde",
+ "sha2",
+ "thiserror",
+ "tokio",
+ "toml",
+ "xz2",
+]
+
+[[package]]
 name = "freyja-extension-oci"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "freyja-core",
