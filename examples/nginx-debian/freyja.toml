@@ -4,13 +4,13 @@ title = "Debian Bookworm nginx metadata rebuild trigger (not pinned)"
 [extensions]
 deb.enabled = true
 
-[targets.nginx]
+[targets.nginx-debian]
 image = "registry.example.com/nginx-debian"
 tags = ["latest"]
 arches = ["amd64"]
 build.context = "."
 
-[targets.nginx.dependencies.nginx_package]
+[targets.nginx-debian.dependencies.nginx_package]
 type = "deb"
 suite = "bookworm"
 component = "main"
