@@ -110,8 +110,6 @@ Every dependency has a `type` plus type-specific fields. The current Podman comm
 | `arch` | APK architecture such as `x86_64` or `aarch64` (not Freyja's `amd64` target label) |
 | `package` | Exact package name in the selected index |
 
-The resolver reads `https://dl-cdn.alpinelinux.org/alpine/<release>/<repository>/<arch>/APKINDEX.tar.gz`, compares the package version and index checksum, and does not pin the resolved version into `apk add`. See [`examples/nginx-alpine/freyja.toml`](./examples/nginx-alpine/freyja.toml). From the repository root, run `target/release/freyja --file examples/nginx-alpine/freyja.toml --state .freyja/alpine-state.toml plan` (the state must stay outside the build context).
-
 `deb` (official Debian 12 Bookworm repositories only):
 
 | Field | Description |
@@ -121,8 +119,6 @@ The resolver reads `https://dl-cdn.alpinelinux.org/alpine/<release>/<repository>
 | `arch` | `amd64` or `arm64` Debian index; does not set the build architecture |
 | `package` | Exact binary package name |
 
-This is a **metadata rebuild trigger**, not package installation, dependency solving, or a pinned image build. The resolved version and artifact SHA256 are compared against state but **not passed into Podman or APT**. `bookworm-security` is a separate explicit dependency: an absent package is an error, never a fallback. See [`examples/nginx-debian/`](./examples/nginx-debian/). From the repository root:
-
 ```sh
 target/release/freyja --file examples/nginx-debian/freyja.toml --state .freyja/debian-state.toml plan
 target/release/freyja --file examples/nginx-debian/freyja.toml --state .freyja/debian-state.toml explain nginx
@@ -130,9 +126,10 @@ target/release/freyja --file examples/nginx-debian/freyja.toml --state .freyja/d
 target/release/freyja --file examples/nginx-debian/freyja.toml --state .freyja/debian-state.toml build
 ```
 
-The resolver downloads `InRelease` from `deb.debian.org` over HTTPS and verifies a Bookworm archive signature using a bundled suite-specific keyring and `gpgv`. The security Release advertises `updates/main` in `Components`, while the signed SHA256 entry and fetched path are `main/binary-<arch>/Packages.xz`; this mismatch is handled explicitly for that suite. It checks the **compressed** exact `main/binary-<arch>/Packages.xz` size and SHA256 from signed metadata. `Packages` artifact SHA256 is a different checksum. Vendored keys come from `https://ftp-master.debian.org/keys/archive-key-12.asc` (fingerprint `B8B80B5B623EAB6AD8775C45B7C5D7D6350947F8`) and `archive-key-12-security.asc` (`05AB90340C0C5E797F44A8C8254CF3B5AEC0A8F0`); audit and update them deliberately when Debian rotates keys. A newly rotated signer is an error until the trust set is reviewed. For Release files without `Valid-Until` (currently observed in `bookworm` and `bookworm-updates`), the cache is refreshed at least hourly but an old still-valid signed Release replayed by the server cannot be detected; do not treat this as snapshot freshness or reproducibility. Every published `Valid-Until` is enforced (including security). No unsigned fallback exists.
-
 See [`examples/nginx-alt/freyja.toml`](./examples/nginx-alt/freyja.toml) for the ALT reference.
+See [`examples/nginx-alpine/freyja.toml`](./examples/nginx-alpine/freyja.toml) for the Alpine reference.
+See [`examples/nginx-debian/freyja.toml`](./examples/nginx-debian/freyja.toml) for the Debian reference.
+
 
 ## State & cache
 
